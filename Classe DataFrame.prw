@@ -21,22 +21,22 @@ ENDCLASS
 // para as propriedades e retornamos Self
 METHOD New(cQuery) Class DataFrame
     ::aCabecalho  := {}
-    ::aDados      := {} 
+    ::aDados      := {}  
     ::cQuery      := cQuery 
     TCQUERY cQuery NEW ALIAS "DataFrame"
     DataFrame->(DBGotop()) 
-    aCabecalho := DataFrame->(DbStruct())
+    ::aCabecalho := DataFrame->(DbStruct())
 
     While DataFrame->(!EOF()) 
 
             aAux := {}
 
-            For i := 1 to len(aCabecalho)
-                cCampoAtu := aCabecalho[i][1] //percorre todos as colunas da query e coloca num vetor
+            For i := 1 to len(::aCabecalho)
+                cCampoAtu := ::aCabecalho[i][1] //percorre todos as colunas da query e coloca num vetor
                 aadd(aAux,&("DataFrame->"+cCampoAtu)) 
             Next
             
-            aadd(aDados, aClone(aAux))  
+            aadd(::aDados , aClone(aAux))  
                    
         Dbskip()  
 
