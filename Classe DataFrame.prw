@@ -1,10 +1,11 @@
 #INCLUDE "PROTHEUS.CH"
+#INCLUDE "TOPCONN.CH"
 
 // --------------------------------------------------------------------------------
 // Declaracao da Classe DataFrame
 // --------------------------------------------------------------------------------
 
-CLASS DataFrame 
+CLASS DataFrame  
 
 // Declaracao das propriedades da Classe
 DATA aCabecalho //lista com os cabecalhos do dataframe
