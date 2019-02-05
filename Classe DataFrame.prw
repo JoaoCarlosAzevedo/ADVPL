@@ -16,6 +16,7 @@ DATA oRelatorio //Objeto do tipo TReport
 // Declaração dos Métodos da Classe
 METHOD New(cQuery) CONSTRUCTOR     //cria o objeto com os dados da query
 METHOD Relatorio()                 //Metodo retorna um objeto do tipo TReport ja configurado.
+METHOD Calc(cOperador,nPivo,nAlvo)  //Metodo que retorna array com duas dimensoes conforme parametro solicitado
 ENDCLASS    
 
  
@@ -46,6 +47,40 @@ METHOD New(cQuery) Class DataFrames
     DbCloseArea()  
 
 Return Self
+
+
+METHOD CALC(cOperador,nPivo,nAlvo) Class DataFrames
+	Local aRet := {} 
+	Local nPos := 0
+	
+	For i := 1 to Len(::aDados)
+	
+		nPos := aScanX( aRet,{ |X,Y| X[1] == ::aDados[i,nPivo]} )		
+
+		IF nPos == 0 //nao encontrou
+			DO CASE 
+				CASE cOperador == "SOMA"
+					Aadd(aRet,{::aDados[i,nPivo],::aDados[i,nAlvo]})
+				CASE cOperador == "MEDIA"
+					Aadd(aRet,{::aDados[i,nPivo],::aDados[i,nAlvo],1}) //adiciona uma dimensao a mais que ira fazer a contagem
+				CASE cOperador == "CONTAGEM"
+					Aadd(aRet,{::aDados[i,nPivo],1}) 
+			ENDCASE
+		ELSE
+			DO CASE
+				CASE cOperador == "SOMA"
+					aRet[nPos,2] := aRet[nPos,2] + ::aDados[i,nAlvo] //realiza a soma conforme posicao
+				CASE cOperador == "MEDIA"
+					aRet[nPos,2] := aRet[nPos,2] + ::aDados[i,nAlvo]
+					aRet[nPos,3] := aRet[nPos,3] + 1 //soma com mais um para depois fazer divis?o
+				CASE cOperador == "CONTAGEM"
+					aRet[nPos,2] := aRet[nPos,2] + 1
+			ENDCASE
+		ENDIF
+
+	Next
+
+Return aRet
  
 METHOD Relatorio() Class DataFrames 
 
