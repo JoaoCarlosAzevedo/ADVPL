@@ -4,7 +4,6 @@
 // --------------------------------------------------------------------------------
 // Declaracao da Classe DataFrames
 // --------------------------------------------------------------------------------
-
 CLASS DataFrames FROM TReport  
 
 // Declaracao das propriedades da Classe
@@ -12,7 +11,7 @@ DATA aCabecalho //lista com os cabecalhos do dataframe
 DATA aDados     //matriz com os retornos do dataframe
 DATA cQuery     //string com a query de consulta
 DATA oRelatorio //Objeto do tipo TReport 
-
+ 
 // Declaração dos Métodos da Classe
 METHOD New(cQuery) CONSTRUCTOR     //cria o objeto com os dados da query
 METHOD Relatorio()                 //Metodo retorna um objeto do tipo TReport ja configurado.
@@ -53,33 +52,47 @@ Return Self
 METHOD CALC(cOperador,nPivo,nAlvo) Class DataFrames
 	Local aRet := {} 
 	Local nPos := 0
-	
+	Local nSum := 0
+
 	For i := 1 to Len(::aDados)
-	
-		nPos := aScanX( aRet,{ |X,Y| X[1] == ::aDados[i,nPivo]} )		
 
-		IF nPos == 0 //nao encontrou
-			DO CASE 
-				CASE cOperador == "SOMA"
-					Aadd(aRet,{::aDados[i,nPivo],::aDados[i,nAlvo]})
-				CASE cOperador == "MEDIA"
-					Aadd(aRet,{::aDados[i,nPivo],::aDados[i,nAlvo],1}) //adiciona uma dimensao a mais que ira fazer a contagem
-				CASE cOperador == "CONTAGEM"
-					Aadd(aRet,{::aDados[i,nPivo],1}) 
-			ENDCASE
-		ELSE
-			DO CASE
-				CASE cOperador == "SOMA"
-					aRet[nPos,2] := aRet[nPos,2] + ::aDados[i,nAlvo] //realiza a soma conforme posicao
-				CASE cOperador == "MEDIA"
-					aRet[nPos,2] := aRet[nPos,2] + ::aDados[i,nAlvo]
-					aRet[nPos,3] := aRet[nPos,3] + 1 //soma com mais um para depois fazer divis?o
-				CASE cOperador == "CONTAGEM"
-					aRet[nPos,2] := aRet[nPos,2] + 1
-			ENDCASE
+		IF nPivo == 0 //nao tem regra no agrupamento
+			nSum := nSum + ::aDados[i,nAlvo]
+		ELSE	
+			nPos := aScanX( aRet,{ |X,Y| X[1] == ::aDados[i,nPivo]} )		
+			IF nPos == 0 //nao encontrou
+				DO CASE 
+					CASE cOperador == "SOMA"
+						Aadd(aRet,{::aDados[i,nPivo],::aDados[i,nAlvo]})
+					CASE cOperador == "MEDIA"
+						Aadd(aRet,{::aDados[i,nPivo],::aDados[i,nAlvo],1}) //adiciona uma dimensao a mais que ira fazer a contagem
+					CASE cOperador == "CONTAGEM"
+						Aadd(aRet,{::aDados[i,nPivo],1}) 
+				ENDCASE
+			ELSE 
+				DO CASE
+					CASE cOperador == "SOMA"
+						aRet[nPos,2] := aRet[nPos,2] + ::aDados[i,nAlvo] //realiza a soma conforme posicao
+					CASE cOperador == "MEDIA"
+						aRet[nPos,2] := aRet[nPos,2] + ::aDados[i,nAlvo]
+						aRet[nPos,3] := aRet[nPos,3] + 1 //soma com mais um para depois fazer divis?o
+					CASE cOperador == "CONTAGEM"
+						aRet[nPos,2] := aRet[nPos,2] + 1
+				ENDCASE
+			ENDIF
 		ENDIF
-
 	Next
+
+	IF nPivo == 0
+		DO CASE 
+			CASE cOperador == "SOMA"
+				return nSum
+			CASE cOperador == "MEDIA"
+				return nSum / LEN(::aDados)
+			CASE cOperador == "CONTAGEM"
+				return LEN(::aDados)
+		ENDCASE	
+	ENDIF
 
 Return aRet
  
@@ -87,8 +100,8 @@ METHOD Relatorio() Class DataFrames
 
     	//Criação do componente de impressão
 
-	::oRelatorio := TReport():New(	"MovD3",;		//Nome do Relatório
-								"Relatorio de Movimentacoes",;		//Título
+	::oRelatorio := TReport():New(	"DataFrame",;		//Nome do Relatório
+								"Relatorio de Dados",;		//Título
 								,;		//Pergunte ... Se eu defino a pergunta aqui, será impresso uma página com os parâmetros, conforme privilégio 101
 								{|oReport| fRepPrint(::oRelatorio,::aDados,::aCabecalho)},;		//Bloco de código que será executado na confirmação da impressão
 								)		//Descrição
@@ -96,7 +109,7 @@ METHOD Relatorio() Class DataFrames
 	::oRelatorio:lParamPage := .F.
 	::oRelatorio:oPage:SetPaperSize(9) //Folha A4 
 	::oRelatorio:SetPortrait()
-	
+	 
 	//Criando a seção de dados
 	oSectDad := TRSection():New(	::oRelatorio,;		//Objeto TReport que a seção pertence
 									"Dados",;		//Descrição da seção
@@ -107,8 +120,8 @@ METHOD Relatorio() Class DataFrames
     For i := 1 to Len(::aCabecalho) 
         
         TRCell():New(oSectDad, ::aCabecalho[i][1], "QRY_AUX",::aCabecalho[i][1], /*Picture*/, ::aCabecalho[i][3], /*lPixel*/,/*{|| code-block de impressao }*/,/*cAlign*/,/*lLineBreak*/,/*cHeaderAlign */,/*lCellBreak*/,/*nColSpace*/,/*lAutoSize*/,/*nClrBack*/,/*nClrFore*/,/*lBold*/)
-    
-    Next
+
+   Next
  
 Return ::oRelatorio  
  
@@ -134,8 +147,6 @@ Static Function fRepPrint(oReport,aDados,aCabec)
 		nAtual++
 		oReport:SetMsgPrint("Imprimindo registro "+cValToChar(nAtual)+" de "+cValToChar(nTotal)+"...")
 		oReport:IncMeter()
-		//Imprimindo a linha atual
-		//oSectDad:PrintLine()
         For y := 1 to Len(aCabec)
             oSectDad:Cell(aCabec[y,1]):SetValue(aDados[i,y])
             oSectDad:Cell(aCabec[y,1]):SetAlign("LEFT")
@@ -145,6 +156,7 @@ Static Function fRepPrint(oReport,aDados,aCabec)
 	oSectDad:Finish()
   
 Return 
+  
 
 METHOD Excel(cTilePla,cTitleTab,cFileName,cDir) Class DataFrames
 		Local i     := 0
