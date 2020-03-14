@@ -158,7 +158,7 @@ Static Function fRepPrint(oReport,aDados,aCabec)
 Return 
   
 
-METHOD Excel(cTilePla,cTitleTab,cFileName,cDir) Class DataFrames
+METHOD Excel(cTile1,cTitle2,cFileName,cDir) Class DataFrames
 		Local i     := 0
 		Local j     := 0
 		Local aLine := {}
@@ -173,22 +173,22 @@ METHOD Excel(cTilePla,cTitleTab,cFileName,cDir) Class DataFrames
                 return .F.
             Endif 
         ENDIF
-
+ 
         //Criando o objeto que irá gerar o conteúdo do Excel
         oFWMsExcel := FWMSExcel():New()
 
         //Aba 01 - Teste
-        oFWMsExcel:AddworkSheet(cTilePla) //Não utilizar número junto com sinal de menos. Ex.: 1-
+        oFWMsExcel:AddworkSheet(cTile1) //Não utilizar número junto com sinal de menos. Ex.: 1-
 
-        //Criando a Tabela
-        oFWMsExcel:AddTable(cTilePla,cTitleTab) 
+        //Criando a Tabela 
+        oFWMsExcel:AddTable(cTile1,cTitle2) 
         
 		//Criando Colunas
 		For i := 1 to Len(::aCabecalho) 
 			IF ::aCabecalho[i,2] == "N" //se o campo for numero coloca o como valor
-				oFWMsExcel:AddColumn(cTilePla,cTitleTab  ,::aCabecalho[i,1],    1,2) //1 = Modo Texto //2 = Valor sem R$ //3 = Valor com R$
+				oFWMsExcel:AddColumn(cTile1,cTitle2  ,::aCabecalho[i,1],    1,2) //1 = Modo Texto //2 = Valor sem R$ //3 = Valor com R$
 			ELSE	
-				oFWMsExcel:AddColumn(cTilePla,cTitleTab  ,::aCabecalho[i,1],    1,1) //1 = Modo Texto //2 = Valor sem R$ //3 = Valor com R$
+				oFWMsExcel:AddColumn(cTile1,cTitle2  ,::aCabecalho[i,1],    1,1) //1 = Modo Texto //2 = Valor sem R$ //3 = Valor com R$
 			ENDIF
 		Next
 
@@ -201,7 +201,7 @@ METHOD Excel(cTilePla,cTitleTab,cFileName,cDir) Class DataFrames
 			oFWMsExcel:AddRow(cTile1,cTitle2,aLine)
 		Next 
 
-    //Ativando o arquivo e gerando o xml
+    //Ativando o arquivo e gerando o xml 
     oFWMsExcel:Activate()
     oFWMsExcel:GetXMLFile(cArquivo) 
           
