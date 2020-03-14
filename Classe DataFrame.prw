@@ -17,6 +17,7 @@ DATA oRelatorio //Objeto do tipo TReport
 METHOD New(cQuery) CONSTRUCTOR     //cria o objeto com os dados da query
 METHOD Relatorio()                 //Metodo retorna um objeto do tipo TReport ja configurado.
 METHOD Calc(cOperador,nPivo,nAlvo)  //Metodo que retorna array com duas dimensoes conforme parametro solicitado
+METHOD Excel(cTile1,cTitle2,cFileName,cDir)
 ENDCLASS    
 
  
@@ -106,14 +107,8 @@ METHOD Relatorio() Class DataFrames
     For i := 1 to Len(::aCabecalho) 
         
         TRCell():New(oSectDad, ::aCabecalho[i][1], "QRY_AUX",::aCabecalho[i][1], /*Picture*/, ::aCabecalho[i][3], /*lPixel*/,/*{|| code-block de impressao }*/,/*cAlign*/,/*lLineBreak*/,/*cHeaderAlign */,/*lCellBreak*/,/*nColSpace*/,/*lAutoSize*/,/*nClrBack*/,/*nClrFore*/,/*lBold*/)
-        //TRCell():New(oSectDad, "TIPOMOV", "QRY_AUX", "Tipomov", /*Picture*/, 3, /*lPixel*/,/*{|| code-block de impressao }*/,/*cAlign*/,/*lLineBreak*/,/*cHeaderAlign */,/*lCellBreak*/,/*nColSpace*/,/*lAutoSize*/,/*nClrBack*/,/*nClrFore*/,/*lBold*/)
-        //TRCell():New(oSectDad, "CODIGO", "QRY_AUX", "Codigo", /*Picture*/, 15, /*lPixel*/,/*{|| code-block de impressao }*/,/*cAlign*/,/*lLineBreak*/,/*cHeaderAlign */,/*lCellBreak*/,/*nColSpace*/,/*lAutoSize*/,/*nClrBack*/,/*nClrFore*/,/*lBold*/)
-        //TRCell():New(oSectDad, "DESCRICAO", "QRY_AUX", "Descricao", /*Picture*/, 30, /*lPixel*/,/*{|| code-block de impressao }*/,/*cAlign*/,/*lLineBreak*/,/*cHeaderAlign */,/*lCellBreak*/,/*nColSpace*/,/*lAutoSize*/,/*nClrBack*/,/*nClrFore*/,/*lBold*/)
-        //TRCell():New(oSectDad, "UNIDADE", "QRY_AUX", "Unidade", /*Picture*/, 2, /*lPixel*/,/*{|| code-block de impressao }*/,/*cAlign*/,/*lLineBreak*/,/*cHeaderAlign */,/*lCellBreak*/,/*nColSpace*/,/*lAutoSize*/,/*nClrBack*/,/*nClrFore*/,/*lBold*/)
-        //TRCell():New(oSectDad, "QUANTIDADE", "QRY_AUX", "Quantidade", /*Picture*/, 15, /*lPixel*/,/*{|| code-block de impressao }*/,/*cAlign*/,/*lLineBreak*/,/*cHeaderAlign */,/*lCellBreak*/,/*nColSpace*/,/*lAutoSize*/,/*nClrBack*/,/*nClrFore*/,/*lBold*/)
+    
     Next
-
-    //::oRelatorio:PrintDialog()
  
 Return ::oRelatorio  
  
@@ -150,4 +145,58 @@ Static Function fRepPrint(oReport,aDados,aCabec)
 	oSectDad:Finish()
   
 Return 
-  
+
+METHOD Excel(cTilePla,cTitleTab,cFileName,cDir) Class DataFrames
+		Local i     := 0
+		Local j     := 0
+		Local aLine := {}
+        Local oFWMsExcel 
+        Local oExcel 
+        Local cArquivo := cDir+cFileName 
+        
+        //verificar se existe o arquivo 
+        IF FILE(cArquivo) 
+            If FERASE(cArquivo) == -1
+                MsgStop('Falha na deleção do Arquivo de Excel: ' + cArquivo + Chr(13)+Chr(10) + "Conferir se não esta aberto...")
+                return .F.
+            Endif 
+        ENDIF
+
+        //Criando o objeto que irá gerar o conteúdo do Excel
+        oFWMsExcel := FWMSExcel():New()
+
+        //Aba 01 - Teste
+        oFWMsExcel:AddworkSheet(cTilePla) //Não utilizar número junto com sinal de menos. Ex.: 1-
+
+        //Criando a Tabela
+        oFWMsExcel:AddTable(cTilePla,cTitleTab) 
+        
+		//Criando Colunas
+		For i := 1 to Len(::aCabecalho) 
+			IF ::aCabecalho[i,2] == "N" //se o campo for numero coloca o como valor
+				oFWMsExcel:AddColumn(cTilePla,cTitleTab  ,::aCabecalho[i,1],    1,2) //1 = Modo Texto //2 = Valor sem R$ //3 = Valor com R$
+			ELSE	
+				oFWMsExcel:AddColumn(cTilePla,cTitleTab  ,::aCabecalho[i,1],    1,1) //1 = Modo Texto //2 = Valor sem R$ //3 = Valor com R$
+			ENDIF
+		Next
+
+		//Criando as linhas
+		For i := 1 to Len(::aDados) 
+			aLine := {}
+			For j := 1 to Len(::aCabecalho)
+				AADD( aLine, ::aDados[i,j])	
+			Next 
+			oFWMsExcel:AddRow(cTile1,cTitle2,aLine)
+		Next 
+
+    //Ativando o arquivo e gerando o xml
+    oFWMsExcel:Activate()
+    oFWMsExcel:GetXMLFile(cArquivo) 
+          
+    //Abrindo o excel e abrindo o arquivo xml
+    oExcel := MsExcel():New()               //Abre uma nova conexão com Excel
+    oExcel:WorkBooks:Open(cArquivo)         //Abre uma planilha
+    oExcel:SetVisible(.T.)                  //Visualiza a planilha
+    oExcel:Destroy()                        //Encerra o processo do gerenciador de tarefas
+     
+return Self 
