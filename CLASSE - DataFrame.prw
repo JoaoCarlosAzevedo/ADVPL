@@ -1,5 +1,6 @@
 #INCLUDE "PROTHEUS.CH"
 #INCLUDE "TOPCONN.CH"
+#include "TOTVS.CH"
 
 // --------------------------------------------------------------------------------
 // Declaracao da Classe DataFrames
@@ -11,12 +12,14 @@ DATA aCabecalho //lista com os cabecalhos do dataframe
 DATA aDados     //matriz com os retornos do dataframe
 DATA cQuery     //string com a query de consulta
 DATA oRelatorio //Objeto do tipo TReport 
+DATA oBrowse
  
 // Declaração dos Métodos da Classe
 METHOD New(cQuery) CONSTRUCTOR     //cria o objeto com os dados da query
 METHOD Relatorio()                 //Metodo retorna um objeto do tipo TReport ja configurado.
 METHOD Calc(cOperador,nPivo,nAlvo)  //Metodo que retorna array com duas dimensoes conforme parametro solicitado
 METHOD Excel(cTile1,cTitle2,cFileName,cDir)
+METHOD Browse(oDialog,bAction)
 ENDCLASS    
 
  
@@ -93,7 +96,7 @@ METHOD CALC(cOperador,nPivo,nAlvo) Class DataFrames
 				return LEN(::aDados)
 		ENDCASE	
 	ENDIF
-
+ 
 Return aRet
  
 METHOD Relatorio() Class DataFrames 
@@ -156,7 +159,6 @@ Static Function fRepPrint(oReport,aDados,aCabec)
 	oSectDad:Finish()
   
 Return 
-  
 
 METHOD Excel(cTile1,cTitle2,cFileName,cDir) Class DataFrames
 		Local i     := 0
@@ -212,3 +214,117 @@ METHOD Excel(cTile1,cTitle2,cFileName,cDir) Class DataFrames
     oExcel:Destroy()                        //Encerra o processo do gerenciador de tarefas
      
 return Self 
+
+ 
+ METHOD Browse(oDialog,bAction) Class Dataframes
+	Local x        := 0
+	Local nSize    := 0
+	Local cAlign   := ""
+	Local lObject  := .F.
+	Local cPicture := "" 
+	Local bBuild   := {|| } 
+	Local aAux     := {}
+	Static oDlg 
+
+	IF oDialog == nil 
+		DEFINE MSDIALOG oDlg TITLE "PRINT" FROM 000, 000  TO 500, 500 COLORS 0, 16777215 PIXEL
+		::oBrowse := TCBrowse():New(000,000,260,184,,,,oDlg,,,,,,,,,,,,.F.,"",.T.,,.F.,,,)
+	ELSE
+		::oBrowse := TCBrowse():New(000,000,260,184,,,,oDialog,,,,,,,,,,,,.F.,"",.T.,,.F.,,,)   	
+	ENDIF
+	
+	
+	::oBrowse:setArray( ::aDados )
+	
+  	For x := 1 to Len(::aCabecalho)
+		nSize    := ::aCabecalho[x,3]
+		cAlign   := AlignField(::aCabecalho[x,2]) 
+		lObject  := .F. //::aCabecalho[i,2] - tipo for oBject? 
+		cPicture := "" 
+		bBuild   := &( "{ ||   self:aDados[self:oBrowse:nAt , " +CVALTOCHAR( x )+ "]  } " )  
+ 
+		::oBrowse:AddColumn(TCColumn():New(::aCabecalho[x,1],bBuild,cPicture,,,cAlign,nSize,lObject,.T.,,,,,))  
+  
+	Next       
+  
+	::oBrowse:bLDblClick    := bAction     
+    ::oBrowse:bHeaderClick := {|| Alert( cValtoChar(::oBrowse:nColPos) )}
+	::oBrowse:Align := CONTROL_ALIGN_ALLCLIENT     
+
+	IF oDialog == nil 
+	 	ACTIVATE MSDIALOG oDlg CENTERED   
+	ENDIF
+			  
+ return ::oBrowse 
+  
+ Static Function AlignField(cTipo)
+	Local cRet := ""  
+ 
+	DO CASE
+		CASE cTipo == "N"
+			cRet := "RIGHT" 
+		CASE cTipo == "C"
+			cRet := "LEFT"  
+		CASE cTipo == "D"
+			cRet := "CENTER"
+		CASE cTipo == "O" 
+			cRet := "CENTER"	
+		OTHERWISE
+			cRet := "LEFT"
+	ENDCASE
+
+ Return cRet
+ 
+ 
+User Function TestData()                        
+Local oPanel1
+Local oPanel2
+Local cQuery := ""
+Local oDados
+local oDados2
+Local bAction := {|| Alert("Teste") }
+Local oTcBrowse
+Local oTcBrowse2
+
+Static oDlg
+
+	cQuery +=" Select Top 5 C2_NUM, C2_ITEM, C2_SEQUEN, C2_DPROD, C2_QUANT, C2_QUANT * 10.333 as Quant2, CONVERT(CHAR,Cast(C2_DATPRI as date),103) as Data   "
+	cQuery +=" From SC2010 "
+	cQuery +=" Where SC2010.D_E_L_E_T_ <> '*'  "
+
+	oDados := DataFrames():New(cQuery)  
+	oDados2 := DataFrames():New(cQuery)  
+
+  DEFINE MSDIALOG oDlg TITLE "New Dialog" FROM 000, 000  TO 500, 500 COLORS 0, 16777215 PIXEL
+
+    @ 000, 000 MSPANEL oPanel1 SIZE 250, 064 OF oDlg COLORS 0, 16777215 RAISED
+    @ 064, 000 MSPANEL oPanel2 SIZE 250, 185 OF oDlg COLORS 0, 16777215 RAISED
+	
+	oTcBrowse  := oDados:Browse(oPanel1,bAction)
+
+	oTcBrowse2 := oDados2:Browse(nil,bAction)
+  
+ 
+	//oDados:Browse(oPanel2,bAction)
+     
+    // Don't change the Align Order    
+    oPanel1:Align := CONTROL_ALIGN_TOP
+    oPanel2:Align := CONTROL_ALIGN_ALLCLIENT     
+ 
+  ACTIVATE MSDIALOG oDlg CENTERED  
+
+Return   
+
+User Function Test02()
+	Local cQuery := ""
+	Local oDados2
+	Local oTcBrowse2
+	Local bAction := {|| Alert("Teste") } 
+
+	cQuery +=" Select Top 5 C2_NUM, C2_ITEM, C2_SEQUEN, C2_DPROD, C2_QUANT, C2_QUANT * 10.333 as Quant2, CONVERT(CHAR,Cast(C2_DATPRI as date),103) as Data   "
+	cQuery +=" From SC2010 "
+	cQuery +=" Where SC2010.D_E_L_E_T_ <> '*'  "
+
+	oDados2 := DataFrames():New(cQuery)  
+	oTcBrowse2 := oDados2:Browse(nil,bAction)
+Return  

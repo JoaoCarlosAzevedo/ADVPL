@@ -12,7 +12,7 @@ Classe desenvolvida em ADVPL para facilitar a manipulação de Querys, construç
 * New(cQuery) - Construtor onde o parametro é a query que deseja construir o objeto. [ X ]
 * Relatorio() - Instancia classe do TReport no atributo oRelatorio para geração de relatorios [ X ]
 * Excel(cTituloPlanilha,cTituloTabela,cNomeArquivo,cDiretorio) - Cria excel conforme os parametros informados [ X ]
-* Soma  - [ X ] 
-* Media - [ X ] 
-* Plot  - [   ] Pendente
-* Excel - [ X ] 
+
+- [x] Media
+- [ ] Plot
+- [X] Excel 
