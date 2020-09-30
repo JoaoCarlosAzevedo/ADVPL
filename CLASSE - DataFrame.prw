@@ -15,11 +15,13 @@ DATA oRelatorio //Objeto do tipo TReport
 DATA oBrowse
  
 // Declaração dos Métodos da Classe
-METHOD New(cQuery) CONSTRUCTOR     //cria o objeto com os dados da query
-METHOD Relatorio()                 //Metodo retorna um objeto do tipo TReport ja configurado.
-METHOD Calc(cOperador,nPivo,nAlvo)  //Metodo que retorna array com duas dimensoes conforme parametro solicitado
+METHOD New(cQuery) CONSTRUCTOR               //cria o objeto com os dados da query
+METHOD Relatorio()                           //Metodo retorna um objeto do tipo TReport ja configurado.
+METHOD Calc(cOperador,nPivo,nAlvo)           //Metodo que retorna array com duas dimensoes conforme parametro solicitado
 METHOD Excel(cTile1,cTitle2,cFileName,cDir)
 METHOD Browse(oDialog,bAction)
+METHOD isEmpty()
+
 ENDCLASS    
 
  
@@ -127,6 +129,15 @@ METHOD Relatorio() Class DataFrames
    Next
  
 Return ::oRelatorio  
+
+METHOD isEmpty() Class DataFrames 
+	lRet := .F.
+
+	IF EMPTY(LEN(::aDados))
+		lRet := .T.
+	ENDIF
+ 
+Return lRet
  
 Static Function fRepPrint(oReport,aDados,aCabec) 
 	Local aArea    := GetArea()
@@ -325,6 +336,6 @@ User Function Test02()
 	cQuery +=" From SC2010 "
 	cQuery +=" Where SC2010.D_E_L_E_T_ <> '*'  "
 
-	oDados2 := DataFrames():New(cQuery)  
+	oDados2 := DataFrames():New(cQuery)   
 	oTcBrowse2 := oDados2:Browse(nil,bAction)
 Return  
