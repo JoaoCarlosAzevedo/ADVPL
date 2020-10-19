@@ -21,6 +21,7 @@ METHOD Calc(cOperador,nPivo,nAlvo)           //Metodo que retorna array com duas
 METHOD Excel(cTile1,cTitle2,cFileName,cDir)
 METHOD Browse(oDialog,bAction)
 METHOD isEmpty()
+METHOD getValue(nLine,cField)
 
 ENDCLASS    
 
@@ -138,6 +139,17 @@ METHOD isEmpty() Class DataFrames
 	ENDIF
  
 Return lRet
+
+METHOD getValue(nLine,cField) Class DataFrames 
+	Local nIndex := 0
+	
+	nIndex :=  aScanX(::aCabecalho,{ |X,Y| X[1] == ALLTRIM(UPPER(cField)) })	
+
+	IF nIndex <> 0 
+		return ::aDados[nLine,nIndex]
+	ENDIF  
+   
+Return ""
  
 Static Function fRepPrint(oReport,aDados,aCabec) 
 	Local aArea    := GetArea()
