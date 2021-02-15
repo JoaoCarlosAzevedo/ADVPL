@@ -10,10 +10,10 @@ CLASS DataFrames FROM TReport
 // Declaracao das propriedades da Classe
 DATA aCabecalho //lista com os cabecalhos do dataframe
 DATA aDados     //matriz com os retornos do dataframe
-DATA cQuery     //string com a query de consulta
+DATA cQuery     //string com a query de consulta 
 DATA oRelatorio //Objeto do tipo TReport 
 DATA oBrowse
-DATA FwBrowse
+DATA oFwBrowse
  
 // Declaração dos Métodos da Classe
 METHOD New(cQuery) CONSTRUCTOR               //cria o objeto com os dados da query
@@ -284,28 +284,29 @@ return Self
   
 
 METHOD FwBrowse(oDialog) Class Dataframes
-	Local nSize    := 0
-	Local cAlign   := ""
-	Local lObject  := .F.
-	Local cPicture := "" 
-	Local bBuild   := {|| } 
-
+	Local nSize      := 0 
+	Local lObject    := .F.
+	Local cPicture   := "" 
+	Local bBuild     := {|| } 
+	Local aSeek      := {}
+	Local aFieFilter := {}
+ 
     ::oFwBrowse := fwBrowse():New() 
  
     ::oFwBrowse:setOwner( oDialog )  
  
     ::oFwBrowse:setDataArray()  
-    ::oFwBrowse:setArray( ::aDados ) 
+    ::oFwBrowse:setArray( ::aDados )  
  
     ::oFwBrowse:SetLocate() // Habilita a Localização de registros
 
     For i := 1 to Len( ::aCabecalho )  
- 
-        nSize    := ::aCabecalho[i,3] 
-        nAlign   := AlignField(::aCabecalho[i,2]) 
+  
+        nSize    := ::aCabecalho[i,3]  
+        nAlign   := AlignFFw(::aCabecalho[i,2])  
         lObject  := .F.  
         cPicture := cRetPicture( ::aCabecalho[i,2], ::aCabecalho[i,4]  ) 
-        bBuild   := &( "{ || ::aDados[::oFwBrowse:nAt," +CVALTOCHAR( i )+ " ] } "  )  
+        bBuild   := &( "{ || self:aDados[self:oFwBrowse:nAt," +CVALTOCHAR( i )+ " ] } "  )  
 
         ::oFwBrowse:addColumn( {::aCabecalho[i,1] ,;
                                bBuild ,;
@@ -315,22 +316,22 @@ METHOD FwBrowse(oDialog) Class Dataframes
                                nSize,;
                                ,;
                                .T. ,;
-                               ,;
+                               ,; 
                                .F.,;
                                ,;
-                               "::aDados[::oFwBrowse:nAt," +CVALTOCHAR( i )+ "]",;
-                               ,;
-                               .F.,;
+                               "self:aDados[self:oFwBrowse:nAt," +CVALTOCHAR( i )+ "]",;
+                               ,; 
+                               .F.,; 
                                .T.,;
                                ,::aCabecalho[i,1]  })
       
         IF ::aCabecalho[i,2] == 'C'                       
-            Aadd(aSeek,{::aCabecalho[i,1],      {{"","C",nSize,0, "::aCabecalho[i,1]" ,"@!"     }}, i, .T. } )
+            Aadd(aSeek,{::aCabecalho[i,1],      {{"","C",nSize,0, "self:aCabecalho[i,1]" ,"@!"     }}, i, .T. } )
         ENDIF 
 
         Aadd(aFieFilter,{::aCabecalho[i,1],::aCabecalho[i,1],::aCabecalho[i,2], nSize, 0, cPicture}) 
 
-    Next   
+    Next     
 
     ::oFwBrowse:setEditCell( .T. , { ||  ,.T.  } ) //activa edit and code block for validation
  
@@ -340,13 +341,9 @@ METHOD FwBrowse(oDialog) Class Dataframes
     ::oFwBrowse:SetFieldFilter(aFieFilter) 
  
  
-    ::oFwBrowse:Activate(.T.)
-
-	IF oDialog == nil 
-	 	ACTIVATE MSDIALOG oDlg CENTERED   
-	ENDIF
-			  
- return ::oFwBrowse 
+    ::oFwBrowse:Activate(.T.) 
+   
+ return ::oFwBrowse  
 
 Static Function cRetPicture(cTipo, nDecimal)
     Local cRet := ""
@@ -378,8 +375,8 @@ return cRet
 
  Return nRet
 
- Static Function AlignField(cTipo)
-	Local cRet := ""  
+ Static Function AlignFFw(cTipo)
+	Local cRet := ""   
  
 	DO CASE
 		CASE cTipo == "N"
@@ -414,24 +411,24 @@ Static oDlg
 	cQuery +=" Where SC2010.D_E_L_E_T_ <> '*'  "
 
 	oDados := DataFrames():New(cQuery)  
-	oDados2 := DataFrames():New(cQuery)  
+	//oDados2 := DataFrames():New(cQuery)   
 
   DEFINE MSDIALOG oDlg TITLE "New Dialog" FROM 000, 000  TO 500, 500 COLORS 0, 16777215 PIXEL
 
     @ 000, 000 MSPANEL oPanel1 SIZE 250, 064 OF oDlg COLORS 0, 16777215 RAISED
     @ 064, 000 MSPANEL oPanel2 SIZE 250, 185 OF oDlg COLORS 0, 16777215 RAISED
 	
-	oTcBrowse  := oDados:Browse(oPanel1,bAction)
+	oTcBrowse  := oDados:FwBrowse(oPanel1) 
 
-	oTcBrowse2 := oDados2:Browse(nil,bAction)
+	//oTcBrowse2 := oDados2:Browse(nil,bAction)
   
- 
+   
 	//oDados:Browse(oPanel2,bAction)
      
     // Don't change the Align Order    
-    oPanel1:Align := CONTROL_ALIGN_TOP
+    oPanel1:Align := CONTROL_ALIGN_TOP 
     oPanel2:Align := CONTROL_ALIGN_ALLCLIENT     
- 
+  
   ACTIVATE MSDIALOG oDlg CENTERED  
 
 Return   
