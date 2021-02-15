@@ -1,4 +1,4 @@
-#INCLUDE "PROTHEUS.CH"
+=#INCLUDE "PROTHEUS.CH"
 #INCLUDE "TOPCONN.CH"
 #include "TOTVS.CH"
 
@@ -332,16 +332,16 @@ METHOD FwBrowse(oDialog) Class Dataframes
         Aadd(aFieFilter,{::aCabecalho[i,1],::aCabecalho[i,1],::aCabecalho[i,2], nSize, 0, cPicture}) 
 
     Next     
-
-    ::oFwBrowse:setEditCell( .T. , { ||  ,.T.  } ) //activa edit and code block for validation
+ 
+    //::oFwBrowse:setEditCell( .T. , { ||  ,.T.  } ) //activa edit and code block for validation
  
     ::oFwBrowse:SetSeek(nil,aSeek)   
     ::oFwBrowse:SetUseFilter()  
     ::oFwBrowse:SetFilterDefault( "" ) 
-    ::oFwBrowse:SetFieldFilter(aFieFilter) 
+    ::oFwBrowse:SetFieldFilter(aFieFilter)  
  
  
-    ::oFwBrowse:Activate(.T.) 
+    //::oFwBrowse:Activate(.T.) 
    
  return ::oFwBrowse  
 
