@@ -13,6 +13,7 @@ DATA aDados     //matriz com os retornos do dataframe
 DATA cQuery     //string com a query de consulta
 DATA oRelatorio //Objeto do tipo TReport 
 DATA oBrowse
+DATA FwBrowse
  
 // Declaração dos Métodos da Classe
 METHOD New(cQuery) CONSTRUCTOR               //cria o objeto com os dados da query
@@ -22,6 +23,7 @@ METHOD Excel(cTile1,cTitle2,cFileName,cDir)
 METHOD Browse(oDialog,bAction)
 METHOD isEmpty()
 METHOD getValue(nLine,cField)
+METHOD FwBrowse(oPanel)
 
 ENDCLASS    
 
@@ -280,6 +282,102 @@ return Self
 			  
  return ::oBrowse 
   
+
+METHOD FwBrowse(oDialog) Class Dataframes
+	Local nSize    := 0
+	Local cAlign   := ""
+	Local lObject  := .F.
+	Local cPicture := "" 
+	Local bBuild   := {|| } 
+
+    ::oFwBrowse := fwBrowse():New() 
+ 
+    ::oFwBrowse:setOwner( oDialog )  
+ 
+    ::oFwBrowse:setDataArray()  
+    ::oFwBrowse:setArray( ::aDados ) 
+ 
+    ::oFwBrowse:SetLocate() // Habilita a Localização de registros
+
+    For i := 1 to Len( ::aCabecalho )  
+ 
+        nSize    := ::aCabecalho[i,3] 
+        nAlign   := AlignField(::aCabecalho[i,2]) 
+        lObject  := .F.  
+        cPicture := cRetPicture( ::aCabecalho[i,2], ::aCabecalho[i,4]  ) 
+        bBuild   := &( "{ || ::aDados[::oFwBrowse:nAt," +CVALTOCHAR( i )+ " ] } "  )  
+
+        ::oFwBrowse:addColumn( {::aCabecalho[i,1] ,;
+                               bBuild ,;
+                               ::aCabecalho[i,2],; 
+                               cPicture,;
+                               nAlign,;
+                               nSize,;
+                               ,;
+                               .T. ,;
+                               ,;
+                               .F.,;
+                               ,;
+                               "::aDados[::oFwBrowse:nAt," +CVALTOCHAR( i )+ "]",;
+                               ,;
+                               .F.,;
+                               .T.,;
+                               ,::aCabecalho[i,1]  })
+      
+        IF ::aCabecalho[i,2] == 'C'                       
+            Aadd(aSeek,{::aCabecalho[i,1],      {{"","C",nSize,0, "::aCabecalho[i,1]" ,"@!"     }}, i, .T. } )
+        ENDIF 
+
+        Aadd(aFieFilter,{::aCabecalho[i,1],::aCabecalho[i,1],::aCabecalho[i,2], nSize, 0, cPicture}) 
+
+    Next   
+
+    ::oFwBrowse:setEditCell( .T. , { ||  ,.T.  } ) //activa edit and code block for validation
+ 
+    ::oFwBrowse:SetSeek(nil,aSeek)   
+    ::oFwBrowse:SetUseFilter()  
+    ::oFwBrowse:SetFilterDefault( "" ) 
+    ::oFwBrowse:SetFieldFilter(aFieFilter) 
+ 
+ 
+    ::oFwBrowse:Activate(.T.)
+
+	IF oDialog == nil 
+	 	ACTIVATE MSDIALOG oDlg CENTERED   
+	ENDIF
+			  
+ return ::oFwBrowse 
+
+Static Function cRetPicture(cTipo, nDecimal)
+    Local cRet := ""
+    Local nCasa := IIF(nDecimal==8,2,nDecimal)
+  
+    IF cTipo == "N"
+        cRet :=  "@E 999,999,999." + Replicate( '9', nCasa )
+    ELSE
+        cRet := "@!"
+    ENDIF   
+ 
+return cRet
+
+  Static Function AlignField(cTipo)
+	Local nRet := 0
+ 
+	DO CASE
+		CASE cTipo == "N"
+			nRet := 0
+		CASE cTipo == "C"
+			nRet := 1
+		CASE cTipo == "D"
+		    nRet := 2
+		CASE cTipo == "O" 
+		    nRet := 0 
+		OTHERWISE
+			nRet := 0 
+	ENDCASE
+
+ Return nRet
+
  Static Function AlignField(cTipo)
 	Local cRet := ""  
  
