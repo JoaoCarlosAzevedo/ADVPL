@@ -1,4 +1,4 @@
-=#INCLUDE "PROTHEUS.CH"
+#INCLUDE "PROTHEUS.CH"
 #INCLUDE "TOPCONN.CH"
 #include "TOTVS.CH"
 
@@ -301,34 +301,55 @@ METHOD FwBrowse(oDialog) Class Dataframes
     ::oFwBrowse:SetLocate() // Habilita a Localização de registros
 
     For i := 1 to Len( ::aCabecalho )  
-  
-        nSize    := ::aCabecalho[i,3]  
-        nAlign   := AlignFFw(::aCabecalho[i,2])  
-        lObject  := .F.  
-        cPicture := cRetPicture( ::aCabecalho[i,2], ::aCabecalho[i,4]  ) 
-        bBuild   := &( "{ || self:aDados[self:oFwBrowse:nAt," +CVALTOCHAR( i )+ " ] } "  )  
 
-        ::oFwBrowse:addColumn( {::aCabecalho[i,1] ,;
-                               bBuild ,;
-                               ::aCabecalho[i,2],; 
-                               cPicture,;
-                               nAlign,;
-                               nSize,;
-                               ,;
-                               .T. ,;
-                               ,; 
-                               .F.,;
-                               ,;
-                               "self:aDados[self:oFwBrowse:nAt," +CVALTOCHAR( i )+ "]",;
-                               ,; 
-                               .F.,; 
-                               .T.,;
-                               ,::aCabecalho[i,1]  })
-      
-        IF ::aCabecalho[i,2] == 'C'                       
-            Aadd(aSeek,{::aCabecalho[i,1],      {{"","C",nSize,0, "self:aCabecalho[i,1]" ,"@!"     }}, i, .T. } )
-        ENDIF 
+		IF isLegend(::aCabecalho[i,1])
+			
+			bBuild   := &( "{ || self:aDados[self:oFwBrowse:nAt," +CVALTOCHAR( i )+ " ] } "  )  
 
+			::oFwBrowse:addColumn( {'',;
+									bBuild ,;
+									::aCabecalho[i,2],; 
+									'@!',;
+									0,;
+									1,;
+									,;
+									.T. ,;
+									,;  
+									.T.,;
+									,; 
+									"self:aDados[self:oFwBrowse:nAt," +CVALTOCHAR( i )+ "]",;
+									,; 
+									.F.,; 
+									.T.,; 
+									,::aCabecalho[i,1]}) 
+		ELSE
+			nSize    := ::aCabecalho[i,3]  
+			nAlign   := AlignFFw(::aCabecalho[i,2])   
+			lObject  := .F.   
+			cPicture := cRetPicture( ::aCabecalho[i,2], ::aCabecalho[i,4]  ) 
+			bBuild   := &( "{ || self:aDados[self:oFwBrowse:nAt," +CVALTOCHAR( i )+ " ] } "  )  
+
+			::oFwBrowse:addColumn( {::aCabecalho[i,1] ,;
+								bBuild ,;
+								::aCabecalho[i,2],; 
+								cPicture,;
+								nAlign,;
+								nSize,;
+								,;
+								.T. ,;
+								,;  
+								.F.,;
+								,;
+								"self:aDados[self:oFwBrowse:nAt," +CVALTOCHAR( i )+ "]",;
+								,; 
+								.F.,; 
+								.T.,; 
+								,::aCabecalho[i,1]  }) 
+		
+			IF ::aCabecalho[i,2] == 'C'                       
+				Aadd(aSeek,{::aCabecalho[i,1],      {{"","C",nSize,0, "self:aCabecalho[i,1]" ,"@!"     }}, i, .T. } )
+			ENDIF 
+		ENDIF
         Aadd(aFieFilter,{::aCabecalho[i,1],::aCabecalho[i,1],::aCabecalho[i,2], nSize, 0, cPicture}) 
 
     Next     
@@ -344,6 +365,15 @@ METHOD FwBrowse(oDialog) Class Dataframes
     //::oFwBrowse:Activate(.T.) 
    
  return ::oFwBrowse  
+
+Static function isLegend(cCampo)
+	Local lRet := .F.
+
+	IF Substring(cCampo,1,7) == 'LEGENDA'
+		lRet := .T.
+	ENDIF
+
+return lRet  
 
 Static Function cRetPicture(cTipo, nDecimal)
     Local cRet := ""
