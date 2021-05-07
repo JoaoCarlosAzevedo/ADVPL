@@ -38,14 +38,19 @@ METHOD New(cQuery) Class DataFrames
     DataFrame->(DBGotop()) 
     ::aCabecalho := DataFrame->(DbStruct())
 
-    While DataFrame->(!EOF())
+    While DataFrame->(!EOF()) 
 
             aAux := {}
 
             For i := 1 to len(::aCabecalho)
                 cCampoAtu := ::aCabecalho[i][1] //percorre todos as colunas da query e coloca num vetor
-                aadd(aAux,&("DataFrame->"+cCampoAtu)) 
-            Next
+				IF ALLTRIM(::aCabecalho[i][1]) == 'CHECKBOX'
+					aadd(aAux,.F.) 
+				ELSE
+					aadd(aAux,&("DataFrame->"+cCampoAtu)) 
+				ENDIF 
+                	
+            Next  
             
             aadd(::aDados , aClone(aAux))  
                    
@@ -300,58 +305,66 @@ METHOD FwBrowse(oDialog) Class Dataframes
  
     ::oFwBrowse:SetLocate() // Habilita a Localização de registros
 
-    For i := 1 to Len( ::aCabecalho )  
+    For i := 1 to Len( ::aCabecalho )   
+		
+		IF ALLTRIM(::aCabecalho[i,1]) == 'CHECKBOX'
 
-		IF isLegend(::aCabecalho[i,1])
-			
-			bBuild   := &( "{ || self:aDados[self:oFwBrowse:nAt," +CVALTOCHAR( i )+ " ] } "  )  
+			::oFwBrowse:AddMarkColumns({|| IIf(::aDados[::oFwBrowse:nAt,01], "LBOK", "LBNO")},; //Code-Block image
+				{|| SelectOne(::oFwBrowse,    ::aDados)},; //Code-Block Double Click  
+				{|| SelectAll(::oFwBrowse,    ::aDados) }) //Code-Block Header Click */
 
-			::oFwBrowse:addColumn( {'',;
+		ELSE
+
+			IF isLegend(::aCabecalho[i,1]) 
+				
+				bBuild   := &( "{ || self:aDados[self:oFwBrowse:nAt," +CVALTOCHAR( i )+ " ] } "  )  
+
+				::oFwBrowse:addColumn( {'',;
+										bBuild ,; 
+										::aCabecalho[i,2],;  
+										'@!',;
+										0,;
+										1,;
+										,;
+										.T. ,;
+										,;  
+										.T.,;
+										,; 
+										"self:aDados[self:oFwBrowse:nAt," +CVALTOCHAR( i )+ "]",;
+										,; 
+										.F.,; 
+										.T.,; 
+										,::aCabecalho[i,1]}) 
+			ELSE
+				nSize    := ::aCabecalho[i,3]  
+				nAlign   := AlignFFw(::aCabecalho[i,2])   
+				lObject  := .F.   
+				cPicture := cRetPicture( ::aCabecalho[i,2], ::aCabecalho[i,4]  ) 
+				bBuild   := &( "{ || self:aDados[self:oFwBrowse:nAt," +CVALTOCHAR( i )+ " ] } "  )  
+
+				::oFwBrowse:addColumn( {::aCabecalho[i,1] ,;
 									bBuild ,;
 									::aCabecalho[i,2],; 
-									'@!',;
-									0,;
-									1,;
+									cPicture,;
+									nAlign,;
+									nSize,;
 									,;
 									.T. ,;
 									,;  
-									.T.,;
-									,; 
+									.F.,;
+									,;
 									"self:aDados[self:oFwBrowse:nAt," +CVALTOCHAR( i )+ "]",;
 									,; 
 									.F.,; 
 									.T.,; 
-									,::aCabecalho[i,1]}) 
-		ELSE
-			nSize    := ::aCabecalho[i,3]  
-			nAlign   := AlignFFw(::aCabecalho[i,2])   
-			lObject  := .F.   
-			cPicture := cRetPicture( ::aCabecalho[i,2], ::aCabecalho[i,4]  ) 
-			bBuild   := &( "{ || self:aDados[self:oFwBrowse:nAt," +CVALTOCHAR( i )+ " ] } "  )  
-
-			::oFwBrowse:addColumn( {::aCabecalho[i,1] ,;
-								bBuild ,;
-								::aCabecalho[i,2],; 
-								cPicture,;
-								nAlign,;
-								nSize,;
-								,;
-								.T. ,;
-								,;  
-								.F.,;
-								,;
-								"self:aDados[self:oFwBrowse:nAt," +CVALTOCHAR( i )+ "]",;
-								,; 
-								.F.,; 
-								.T.,; 
-								,::aCabecalho[i,1]  }) 
-		
-			IF ::aCabecalho[i,2] == 'C'                       
-				Aadd(aSeek,{::aCabecalho[i,1],      {{"","C",nSize,0, "self:aCabecalho[i,1]" ,"@!"     }}, i, .T. } )
+									,::aCabecalho[i,1]  }) 
+			 
+				IF ::aCabecalho[i,2] == 'C'                       
+					Aadd(aSeek,{::aCabecalho[i,1],      {{"","C",nSize,0, "self:aCabecalho[i,1]" ,"@!"     }}, i, .T. } )
+				ENDIF 
 			ENDIF 
+			Aadd(aFieFilter,{::aCabecalho[i,1],::aCabecalho[i,1],::aCabecalho[i,2], nSize, 0, cPicture}) 
 		ENDIF
-        Aadd(aFieFilter,{::aCabecalho[i,1],::aCabecalho[i,1],::aCabecalho[i,2], nSize, 0, cPicture}) 
-
     Next     
  
     //::oFwBrowse:setEditCell( .T. , { ||  ,.T.  } ) //activa edit and code block for validation
@@ -363,8 +376,29 @@ METHOD FwBrowse(oDialog) Class Dataframes
  
  
     //::oFwBrowse:Activate(.T.) 
-   
+    
  return ::oFwBrowse  
+
+ 
+Static Function SelectOne(oBrowse, aArquivo)
+    aArquivo[oBrowse:nAt,1] := !aArquivo[oBrowse:nAt,1]
+    //oBrowse:Refresh()
+Return .T. 
+  
+
+Static Function SelectAll(oBrowse, aArquivo) 
+	Local _ni := 1
+
+	For _ni := 1 to len(aArquivo)
+		aArquivo[_ni,1] := !aArquivo[_ni,1]
+	Next
+	oBrowse:Refresh() 
+
+	//lMarker:=!lMarker 
+
+Return .T.
+
+
 
 Static function isLegend(cCampo)
 	Local lRet := .F.
